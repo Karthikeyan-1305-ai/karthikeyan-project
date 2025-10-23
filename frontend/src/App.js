@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import EditMedia from './EditMedia';
 
-function App() {
+function MainApp() {
   const [mediaItems, setMediaItems] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -15,7 +17,6 @@ function App() {
     notes: ''
   });
 
-  // Fetch media items from backend
   useEffect(() => {
     fetchMediaItems();
   }, []);
@@ -63,17 +64,18 @@ function App() {
   };
 
   const handleDelete = async (id) => {
-    try {
-      await fetch(`api/media/${id}`, {
-        method: 'DELETE'
-      });
-      fetchMediaItems();
-    } catch (error) {
-      console.error('Error deleting media:', error);
+    if (window.confirm('Are you sure you want to delete this item?')) {
+      try {
+        await fetch(`/api/media/${id}`, {
+          method: 'DELETE'
+        });
+        fetchMediaItems();
+      } catch (error) {
+        console.error('Error deleting media:', error);
+      }
     }
   };
 
-  // Calculate statistics
   const totalItems = mediaItems.length;
   const completedItems = mediaItems.filter(item => item.status === 'Completed').length;
   const inProgressItems = mediaItems.filter(item => item.status === 'In Progress').length;
@@ -123,85 +125,116 @@ function App() {
           <h2>Add New Media Item</h2>
           <form onSubmit={handleSubmit}>
             <div className="form-group">
-              <label>Title *</label>
+              <label>
+                <span className="label-icon">🎬</span>
+                Title *
+              </label>
               <input
                 type="text"
                 name="title"
                 value={formData.title}
                 onChange={handleInputChange}
+                placeholder="Enter title"
                 required
               />
             </div>
 
             <div className="form-group">
-              <label>Type *</label>
+              <label>
+                <span className="label-icon">📁</span>
+                Type *
+              </label>
               <select name="type" value={formData.type} onChange={handleInputChange}>
-                <option value="Movie">Movie</option>
-                <option value="TV Show">TV Show</option>
-                <option value="Book">Book</option>
-                <option value="Music">Music</option>
-                <option value="Game">Game</option>
+                <option value="Movie">🎬 Movie</option>
+                <option value="TV Show">📺 TV Show</option>
+                <option value="Book">📚 Book</option>
+                <option value="Music">🎵 Music</option>
+                <option value="Game">🎮 Game</option>
               </select>
             </div>
 
             <div className="form-group">
-              <label>Status *</label>
+              <label>
+                <span className="label-icon">📊</span>
+                Status *
+              </label>
               <select name="status" value={formData.status} onChange={handleInputChange}>
-                <option value="Wishlist">Wishlist</option>
-                <option value="In Progress">In Progress</option>
-                <option value="Completed">Completed</option>
+                <option value="Wishlist">⭐ Wishlist</option>
+                <option value="In Progress">▶️ In Progress</option>
+                <option value="Completed">✅ Completed</option>
               </select>
             </div>
 
             <div className="form-group">
-              <label>Genre</label>
+              <label>
+                <span className="label-icon">🎭</span>
+                Genre
+              </label>
               <input
                 type="text"
                 name="genre"
                 value={formData.genre}
                 onChange={handleInputChange}
+                placeholder="e.g., Action, Drama"
               />
             </div>
 
             <div className="form-group">
-              <label>Release Year</label>
+              <label>
+                <span className="label-icon">📅</span>
+                Release Year
+              </label>
               <input
                 type="text"
                 name="releaseYear"
                 value={formData.releaseYear}
                 onChange={handleInputChange}
+                placeholder="e.g., 2024"
               />
             </div>
 
             <div className="form-group">
-              <label>Rating (0-10)</label>
+              <label>
+                <span className="label-icon">⭐</span>
+                Rating (0-10)
+              </label>
               <input
                 type="number"
                 name="rating"
                 min="0"
                 max="10"
+                step="0.1"
                 value={formData.rating}
                 onChange={handleInputChange}
+                placeholder="Rate from 0 to 10"
               />
             </div>
 
             <div className="form-group">
-              <label>Cover Image URL</label>
+              <label>
+                <span className="label-icon">🖼️</span>
+                Cover Image URL
+              </label>
               <input
                 type="text"
                 name="coverImageUrl"
                 value={formData.coverImageUrl}
                 onChange={handleInputChange}
+                placeholder="https://example.com/image.jpg"
               />
             </div>
 
             <div className="form-group">
-              <label>Notes</label>
+              <label>
+                <span className="label-icon">📝</span>
+                Notes
+              </label>
               <textarea
                 name="notes"
                 value={formData.notes}
                 onChange={handleInputChange}
-                placeholder="Add your thoughts..."
+                placeholder="Add your thoughts, reviews, or reminders..."
+                rows="4"
               />
             </div>
 
@@ -230,12 +263,18 @@ function App() {
                 {item.releaseYear && <p><strong>Year:</strong> {item.releaseYear}</p>}
                 {item.rating && <p><strong>Rating:</strong> {item.rating}/10</p>}
                 {item.notes && <p><strong>Notes:</strong> {item.notes}</p>}
-                <button 
-                  onClick={() => handleDelete(item.id)} 
-                  className="delete-button"
-                >
-                  Delete
-                </button>
+                
+                <div className="button-container">
+                  <Link to={`/edit-media/${item.id}`}>
+                    <button className="edit-button">Edit</button>
+                  </Link>
+                  <button 
+                    onClick={() => handleDelete(item.id)} 
+                    className="delete-button"
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
             </div>
           ))
@@ -246,6 +285,17 @@ function App() {
         <p>Made in VS Code</p>
       </footer>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<MainApp />} />
+        <Route path="/edit-media/:id" element={<EditMedia />} />
+      </Routes>
+    </Router>
   );
 }
 

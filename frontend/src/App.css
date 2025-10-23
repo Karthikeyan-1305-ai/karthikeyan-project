@@ -105,40 +105,55 @@ body {
   background: #5568d3;
 }
 
+/* ====== BEAUTIFUL ADD FORM STYLING ====== */
 .form-container {
   background: white;
-  padding: 30px;
-  border-radius: 10px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 40px;
+  border-radius: 15px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
   margin-bottom: 30px;
+  border-top: 5px solid #667eea;
 }
 
 .form-container h2 {
-  margin-bottom: 20px;
+  margin-bottom: 30px;
   color: #333;
+  font-size: 2rem;
+  text-align: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: 25px;
+  position: relative;
+  animation: slideIn 0.3s ease-out;
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   font-weight: 600;
   color: #333;
+  font-size: 1rem;
+  transition: color 0.3s;
 }
+
+
 
 .form-group input,
 .form-group select,
 .form-group textarea {
   width: 100%;
-  padding: 10px;
+  padding: 14px 18px;
   border: 2px solid #e0e0e0;
-  border-radius: 5px;
+  border-radius: 10px;
   font-size: 1rem;
   font-family: inherit;
-  transition: border-color 0.3s;
+  transition: all 0.3s ease;
+  background: #fafafa;
 }
 
 .form-group input:focus,
@@ -146,28 +161,91 @@ body {
 .form-group textarea:focus {
   outline: none;
   border-color: #667eea;
+  background: white;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+  transform: translateY(-2px);
+}
+
+.form-group input:hover,
+.form-group select:hover,
+.form-group textarea:hover {
+  border-color: #b8beff;
 }
 
 .form-group textarea {
-  min-height: 100px;
+  min-height: 120px;
   resize: vertical;
+  line-height: 1.7;
+  font-family: inherit;
+}
+
+.form-group input[name="rating"] {
+  background: linear-gradient(to right, #fff 0%, #f0f0ff 100%);
+}
+
+.form-group input[type="number"] {
+  font-weight: 600;
+  color: #667eea;
+}
+
+.form-group select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23667eea' d='M10.293 3.293L6 7.586 1.707 3.293A1 1 0 00.293 4.707l5 5a1 1 0 001.414 0l5-5a1 1 0 10-1.414-1.414z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 15px center;
+  padding-right: 40px;
+  cursor: pointer;
 }
 
 .submit-button {
   width: 100%;
-  padding: 12px;
-  background: #667eea;
+  padding: 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
-  border-radius: 5px;
-  font-size: 1.1rem;
-  font-weight: 600;
+  border-radius: 12px;
+  font-size: 1.2rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: background 0.3s;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  margin-top: 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+.submit-button::before {
+  content: '✨';
+  position: absolute;
+  left: 20px;
+  font-size: 1.3rem;
+}
+
+.submit-button::after {
+  content: '✨';
+  position: absolute;
+  right: 20px;
+  font-size: 1.3rem;
 }
 
 .submit-button:hover {
-  background: #5568d3;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+}
+
+.submit-button:active {
+  transform: translateY(-1px);
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .media-grid {
@@ -232,9 +310,42 @@ body {
   font-size: 0.95rem;
 }
 
+/* Button container for perfect alignment */
+.button-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+/* Remove default link styling */
+.button-container a {
+  text-decoration: none;
+}
+
+/* Edit button styling */
+.edit-button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  min-width: 80px;
+}
+
+.edit-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+/* Delete button - updated to match Edit button */
 .delete-button {
-  margin-top: 15px;
-  padding: 8px 15px;
+  padding: 10px 20px;
   background: #ff4757;
   color: white;
   border: none;
@@ -242,11 +353,46 @@ body {
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.3s;
+  transition: all 0.3s ease;
+  min-width: 80px;
 }
 
 .delete-button:hover {
   background: #ee5a6f;
+  transform: translateY(-2px);
+}
+
+/* Edit form styling */
+.edit-form-container {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  max-width: 600px;
+  margin: 30px auto;
+}
+
+.edit-form-container h2 {
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.back-button {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  transition: all 0.3s ease;
+}
+
+.back-button:hover {
+  background: #5a6268;
+  transform: translateY(-2px);
 }
 
 .footer {
@@ -255,6 +401,231 @@ body {
   padding: 20px;
   margin-top: 30px;
   opacity: 0.8;
+}
+
+/* ====== EDIT PAGE STYLING ====== */
+
+.edit-page-header {
+  text-align: center;
+  color: white;
+  margin-bottom: 40px;
+  position: relative;
+}
+
+.edit-page-header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+}
+
+.edit-page-header p {
+  font-size: 1.1rem;
+  opacity: 0.9;
+}
+
+.back-button-top {
+  position: absolute;
+  left: 0;
+  top: 0;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 2px solid white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.back-button-top:hover {
+  background: white;
+  color: #667eea;
+  transform: translateX(-5px);
+}
+
+.edit-form-wrapper {
+  display: grid;
+  grid-template-columns: 350px 1fr;
+  gap: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.edit-preview-card {
+  background: white;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  text-align: center;
+  height: fit-content;
+  position: sticky;
+  top: 20px;
+}
+
+.preview-image-container {
+  width: 100%;
+  height: 300px;
+  margin-bottom: 20px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #f0f0f0;
+}
+
+.preview-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.edit-preview-card h2 {
+  color: #333;
+  font-size: 1.5rem;
+  margin-bottom: 15px;
+}
+
+.preview-details {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.preview-badge {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.status-badge {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.edit-form-card {
+  background: white;
+  padding: 40px;
+  border-radius: 15px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.edit-form-card h2 {
+  color: #333;
+  font-size: 1.8rem;
+  margin-bottom: 30px;
+  border-bottom: 3px solid #667eea;
+  padding-bottom: 10px;
+}
+
+.form-row {
+  margin-bottom: 25px;
+}
+
+.form-row.two-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.rating-input-container {
+  position: relative;
+}
+
+.rating-display {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-weight: 600;
+  color: #667eea;
+  font-size: 0.9rem;
+  background: #f0f0ff;
+  padding: 4px 12px;
+  border-radius: 15px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 15px;
+  margin-top: 35px;
+  padding-top: 25px;
+  border-top: 2px solid #f0f0f0;
+}
+
+.cancel-button {
+  flex: 1;
+  padding: 14px;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.cancel-button:hover {
+  background: #5a6268;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(108, 117, 125, 0.3);
+}
+
+.save-button {
+  flex: 2;
+  padding: 14px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.save-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+
+.loading-container,
+.error-container {
+  text-align: center;
+  padding: 100px 20px;
+  color: white;
+}
+
+.loading-spinner {
+  border: 5px solid rgba(255, 255, 255, 0.3);
+  border-top: 5px solid white;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive Design */
+@media (max-width: 968px) {
+  .edit-form-wrapper {
+    grid-template-columns: 1fr;
+  }
+  
+  .edit-preview-card {
+    position: relative;
+    top: 0;
+  }
+  
+  .form-row.two-columns {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 768px) {
@@ -278,4 +649,192 @@ body {
   .media-grid {
     grid-template-columns: 1fr;
   }
+}
+/* ====== BEAUTIFUL EDIT FORM ENHANCEMENTS ====== */
+
+.edit-form-card .form-group {
+  animation: slideIn 0.3s ease-out;
+}
+
+.edit-form-card .form-group label {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: 600;
+  color: #333;
+  font-size: 1rem;
+  transition: color 0.3s;
+}
+
+.edit-form-card .form-group input,
+.edit-form-card .form-group select,
+.edit-form-card .form-group textarea {
+  width: 100%;
+  padding: 14px 18px;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-family: inherit;
+  transition: all 0.3s ease;
+  background: #fafafa;
+}
+
+.edit-form-card .form-group input:focus,
+.edit-form-card .form-group select:focus,
+.edit-form-card .form-group textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  background: white;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+  transform: translateY(-2px);
+}
+
+.edit-form-card .form-group input:hover,
+.edit-form-card .form-group select:hover,
+.edit-form-card .form-group textarea:hover {
+  border-color: #b8beff;
+}
+
+.edit-form-card .form-group select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23667eea' d='M10.293 3.293L6 7.586 1.707 3.293A1 1 0 00.293 4.707l5 5a1 1 0 001.414 0l5-5a1 1 0 10-1.414-1.414z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 15px center;
+  padding-right: 40px;
+  cursor: pointer;
+}
+
+.edit-form-card .form-group input[type="number"] {
+  font-weight: 600;
+  color: #667eea;
+}
+
+.edit-form-card .form-group input[name="rating"] {
+  background: linear-gradient(to right, #fff 0%, #f0f0ff 100%);
+}
+
+.edit-form-card .form-group textarea {
+  line-height: 1.7;
+  min-height: 120px;
+}
+
+/* Enhanced rating input in edit form */
+.edit-form-card .rating-input-container input {
+  padding-right: 100px;
+}
+
+/* Save button enhancements */
+.save-button {
+  position: relative;
+  overflow: hidden;
+}
+
+
+
+.save-button:active {
+  transform: translateY(0px);
+}
+
+/* Cancel button enhancements */
+.cancel-button::before {
+  content: '✖';
+  margin-right: 8px;
+  font-size: 1.1rem;
+}
+
+/* Two column form rows in edit */
+.form-row.two-columns .form-group {
+  margin-bottom: 0;
+}
+
+/* Add gradient border to edit form card */
+.edit-form-card {
+  border-top: 5px solid transparent;
+  border-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-image-slice: 1;
+}
+
+/* Make the edit page header more colorful */
+.edit-page-header h1 {
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Preview card enhancements */
+.edit-preview-card {
+  border-top: 5px solid transparent;
+  border-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-image-slice: 1;
+}
+
+.edit-preview-card h2 {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Enhanced form actions */
+.form-actions {
+  animation: slideIn 0.4s ease-out;
+}
+
+/* Loading state enhancements */
+.loading-container h2,
+.loading-container p {
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Placeholder styling */
+.edit-form-card input::placeholder,
+.edit-form-card textarea::placeholder {
+  color: #aaa;
+  font-style: italic;
+}
+
+.edit-form-card input:focus::placeholder,
+.edit-form-card textarea:focus::placeholder {
+  color: #ccc;
+}
+
+/* Input field icon effect */
+.edit-form-card .form-group input[name="title"] {
+  background: linear-gradient(to right, #fff 0%, #f9f9ff 100%);
+}
+
+.edit-form-card .form-group input[name="coverImageUrl"] {
+  background: linear-gradient(to right, #fff 0%, #fff9f9 100%);
+}
+
+/* Smooth focus transition for all inputs */
+.edit-form-card .form-group input,
+.edit-form-card .form-group select,
+.edit-form-card .form-group textarea {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+/* ====== BEAUTIFUL LABEL ICONS ====== */
+
+.label-icon {
+  margin-right: 8px;
+  font-size: 1.1rem;
+  display: inline-block;
+}
+
+.edit-form-card .form-group label {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  font-weight: 600;
+  color: #333;
+  font-size: 1rem;
+}
+
+/* Rating badge in preview */
+.rating-badge {
+  background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%) !important;
+}
+
+/* Enhanced form header with gradient and icon */
+.edit-form-card h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
