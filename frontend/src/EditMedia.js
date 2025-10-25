@@ -3,6 +3,8 @@ import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import './App.css';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
 const EditMedia = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -20,6 +22,16 @@ const EditMedia = () => {
   const [error, setError] = useState(null);
   const [validationErrors, setValidationErrors] = useState({});
 
+  // Helper: get Authorization header
+  const getAuthHeader = () => {
+    const token = localStorage.getItem('token');
+    return {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    };
+  };
+
   useEffect(() => {
     const fetchMediaItem = async () => {
       try {
@@ -29,13 +41,7 @@ const EditMedia = () => {
           return;
         }
 
-        // ✅ FIX: Added full URL and Authorization header
-        const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-        const response = await axios.get(`${API_URL}/api/media/${id}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const response = await axios.get(`${API_URL}/api/media/${id}`, getAuthHeader());
         setMediaItem(response.data);
         setLoading(false);
       } catch (err) {
@@ -50,28 +56,22 @@ const EditMedia = () => {
         setLoading(false);
       }
     };
-    
+
     fetchMediaItem();
   }, [id, navigate]);
 
-  // ✅ FIX: Added validation function
+  // Validation logic
   const validateForm = () => {
     const errors = {};
-
-    // Year validation - must be 4 digits
     if (mediaItem.releaseYear && !/^\d{4}$/.test(mediaItem.releaseYear)) {
       errors.releaseYear = 'Year must be 4 digits (e.g., 2024)';
     }
-
-    // Rating validation
     if (mediaItem.rating) {
       const rating = parseFloat(mediaItem.rating);
       if (isNaN(rating) || rating < 0 || rating > 10) {
         errors.rating = 'Rating must be between 0 and 10';
       }
     }
-
-    // URL validation
     if (mediaItem.coverImageUrl && mediaItem.coverImageUrl.trim() !== '') {
       try {
         const url = new URL(mediaItem.coverImageUrl);
@@ -82,7 +82,6 @@ const EditMedia = () => {
         errors.coverImageUrl = 'Please enter a valid URL';
       }
     }
-
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -90,8 +89,6 @@ const EditMedia = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setMediaItem({ ...mediaItem, [name]: value });
-    
-    // Clear validation error for this field
     if (validationErrors[name]) {
       setValidationErrors({ ...validationErrors, [name]: '' });
     }
@@ -99,26 +96,17 @@ const EditMedia = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // ✅ FIX: Added validation check
     if (!validateForm()) {
       alert('❌ Please fix the validation errors');
       return;
     }
-    
     try {
       const token = localStorage.getItem('token');
       if (!token) {
         navigate('/login');
         return;
       }
-
-      // ✅ FIX: Added full URL and Authorization header
-      await axios.put(`http://localhost:5000/api/media/${id}`, mediaItem, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      await axios.put(`${API_URL}/api/media/${id}`, mediaItem, getAuthHeader());
       alert('✅ Media item updated successfully!');
       navigate('/');
     } catch (err) {
@@ -186,7 +174,6 @@ const EditMedia = () => {
 
         <div className="edit-form-card">
           <h2>📝 Edit Details</h2>
-          
           <form onSubmit={handleSubmit}>
             <div className="form-row">
               <div className="form-group">
@@ -204,7 +191,6 @@ const EditMedia = () => {
                 />
               </div>
             </div>
-
             <div className="form-row two-columns">
               <div className="form-group">
                 <label>
@@ -219,7 +205,6 @@ const EditMedia = () => {
                   <option value="Game">🎮 Game</option>
                 </select>
               </div>
-
               <div className="form-group">
                 <label>
                   <span className="label-icon">📊</span>
@@ -232,7 +217,6 @@ const EditMedia = () => {
                 </select>
               </div>
             </div>
-
             <div className="form-row two-columns">
               <div className="form-group">
                 <label>
@@ -247,13 +231,11 @@ const EditMedia = () => {
                   placeholder="e.g., Action, Drama"
                 />
               </div>
-
               <div className="form-group">
                 <label>
                   <span className="label-icon">📅</span>
                   Release Year
                 </label>
-                {/* ✅ FIX: Added maxLength and pattern for year validation */}
                 <input
                   type="text"
                   name="releaseYear"
@@ -264,7 +246,6 @@ const EditMedia = () => {
                   pattern="\d{4}"
                   style={{ borderColor: validationErrors.releaseYear ? 'red' : '' }}
                 />
-                {/* ✅ FIX: Added error message display */}
                 {validationErrors.releaseYear && (
                   <span style={{ color: 'red', fontSize: '12px' }}>
                     {validationErrors.releaseYear}
@@ -272,7 +253,6 @@ const EditMedia = () => {
                 )}
               </div>
             </div>
-
             <div className="form-row">
               <div className="form-group">
                 <label>
@@ -293,7 +273,6 @@ const EditMedia = () => {
                   />
                   <span className="rating-display">{mediaItem.rating ? `${mediaItem.rating}/10` : 'Not rated'}</span>
                 </div>
-                {/* ✅ FIX: Added error message display */}
                 {validationErrors.rating && (
                   <span style={{ color: 'red', fontSize: '12px', display: 'block' }}>
                     {validationErrors.rating}
@@ -301,14 +280,12 @@ const EditMedia = () => {
                 )}
               </div>
             </div>
-
             <div className="form-row">
               <div className="form-group">
                 <label>
                   <span className="label-icon">🖼️</span>
                   Cover Image URL
                 </label>
-                {/* ✅ FIX: Changed type to url for validation */}
                 <input
                   type="url"
                   name="coverImageUrl"
@@ -317,7 +294,6 @@ const EditMedia = () => {
                   placeholder="https://example.com/image.jpg"
                   style={{ borderColor: validationErrors.coverImageUrl ? 'red' : '' }}
                 />
-                {/* ✅ FIX: Added error message display */}
                 {validationErrors.coverImageUrl && (
                   <span style={{ color: 'red', fontSize: '12px' }}>
                     {validationErrors.coverImageUrl}
@@ -325,7 +301,6 @@ const EditMedia = () => {
                 )}
               </div>
             </div>
-
             <div className="form-row">
               <div className="form-group">
                 <label>
@@ -341,7 +316,6 @@ const EditMedia = () => {
                 />
               </div>
             </div>
-
             <div className="form-actions">
               <button type="button" onClick={() => navigate('/')} className="cancel-button">
                 ✖ Cancel
