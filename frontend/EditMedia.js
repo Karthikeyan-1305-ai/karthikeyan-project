@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useParams, useNavigate } from 'react-router-dom';
 import './App.css';
 
-function EditMedia() {
+const EditMedia = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [formData, setFormData] = useState({
+  const [mediaItem, setMediaItem] = useState({
     title: '',
     type: 'Movie',
     status: 'Wishlist',
@@ -18,113 +16,128 @@ function EditMedia() {
     coverImageUrl: '',
     notes: ''
   });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [validationErrors, setValidationErrors] = useState({});
 
   useEffect(() => {
-    fetchMediaItem();
-  }, [id]);
+    const fetchMediaItem = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          navigate('/login');
+          return;
+        }
 
-  const getAuthHeader = () => {
-    const token = localStorage.getItem('token');
-    return {
-      headers: {
-        'Authorization': `Bearer ${token}`
+        // ✅ FIX: Added full URL and Authorization header
+        const response = await axios.get(`http://localhost:5000/api/media/${id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        setMediaItem(response.data);
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching media item:', err);
+        if (err.response?.status === 401) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          navigate('/login');
+        } else {
+          setError('Failed to load media item');
+        }
+        setLoading(false);
       }
     };
-  };
+    
+    fetchMediaItem();
+  }, [id, navigate]);
 
-  const fetchMediaItem = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      
-      if (!token) {
-        alert('Please login first');
-        navigate('/login');
-        return;
-      }
+  // ✅ FIX: Added validation function
+  const validateForm = () => {
+    const errors = {};
 
-      console.log('🔵 Fetching media item:', id);
-      
-      const response = await axios.get(
-        `http://localhost:5000/api/media/${id}`,
-        getAuthHeader()
-      );
-
-      console.log('🔵 Loaded media item:', response.data);
-      setFormData(response.data);
-      setLoading(false);
-
-    } catch (error) {
-      console.error('🔴 Error fetching media item:', error);
-      
-      if (error.response?.status === 401) {
-        alert('Session expired. Please login again.');
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        navigate('/login');
-      } else if (error.response?.status === 404) {
-        setError('Media item not found');
-      } else {
-        setError('Error loading media item: ' + error.message);
-      }
-      setLoading(false);
+    // Year validation - must be 4 digits
+    if (mediaItem.releaseYear && !/^\d{4}$/.test(mediaItem.releaseYear)) {
+      errors.releaseYear = 'Year must be 4 digits (e.g., 2024)';
     }
+
+    // Rating validation
+    if (mediaItem.rating) {
+      const rating = parseFloat(mediaItem.rating);
+      if (isNaN(rating) || rating < 0 || rating > 10) {
+        errors.rating = 'Rating must be between 0 and 10';
+      }
+    }
+
+    // URL validation
+    if (mediaItem.coverImageUrl && mediaItem.coverImageUrl.trim() !== '') {
+      try {
+        const url = new URL(mediaItem.coverImageUrl);
+        if (!['http:', 'https:'].includes(url.protocol)) {
+          errors.coverImageUrl = 'URL must start with http:// or https://';
+        }
+      } catch {
+        errors.coverImageUrl = 'Please enter a valid URL';
+      }
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
-  const handleInputChange = (e) => {
+  const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    setMediaItem({ ...mediaItem, [name]: value });
+    
+    // Clear validation error for this field
+    if (validationErrors[name]) {
+      setValidationErrors({ ...validationErrors, [name]: '' });
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // ✅ FIX: Added validation check
+    if (!validateForm()) {
+      alert('❌ Please fix the validation errors');
+      return;
+    }
+    
     try {
       const token = localStorage.getItem('token');
-      
       if (!token) {
-        alert('Please login first');
         navigate('/login');
         return;
       }
 
-      console.log('🔵 Updating media item:', id);
-
-      const response = await axios.put(
-        `http://localhost:5000/api/media/${id}`,
-        formData,
-        getAuthHeader()
-      );
-
-      console.log('🔵 Update successful:', response.data);
-      alert('✅ Media updated successfully!');
+      // ✅ FIX: Added full URL and Authorization header
+      await axios.put(`http://localhost:5000/api/media/${id}`, mediaItem, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      alert('✅ Media item updated successfully!');
       navigate('/');
-
-    } catch (error) {
-      console.error('🔴 Error updating media:', error);
-      
-      if (error.response?.status === 401) {
-        alert('Session expired. Please login again.');
+    } catch (err) {
+      console.error('Error updating media:', err);
+      if (err.response?.status === 401) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         navigate('/login');
       } else {
-        alert('❌ Error updating media: ' + (error.response?.data?.error || error.message));
+        alert('❌ Error updating media item');
       }
     }
-  };
-
-  const handleCancel = () => {
-    navigate('/');
   };
 
   if (loading) {
     return (
       <div className="App">
-        <header className="header">
-          <h1>Loading...</h1>
-        </header>
-        <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
-          <p>Please wait while we load the media item...</p>
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p>Loading...</p>
         </div>
       </div>
     );
@@ -133,26 +146,9 @@ function EditMedia() {
   if (error) {
     return (
       <div className="App">
-        <header className="header">
-          <h1>⚠️ Error</h1>
-        </header>
-        <div style={{ padding: '40px', textAlign: 'center' }}>
-          <div style={{ 
-            background: '#ffe6e6', 
-            color: '#cc0000', 
-            padding: '20px', 
-            borderRadius: '8px',
-            marginBottom: '20px',
-            maxWidth: '600px',
-            margin: '0 auto 20px'
-          }}>
-            <strong>Error:</strong> {error}
-          </div>
-          <button 
-            onClick={handleCancel} 
-            className="submit-button"
-            style={{ maxWidth: '300px' }}
-          >
+        <div className="error-container">
+          <h2>⚠️ {error}</h2>
+          <button onClick={() => navigate('/')} className="back-button">
             ← Back to Catalog
           </button>
         </div>
@@ -162,165 +158,202 @@ function EditMedia() {
 
   return (
     <div className="App">
-      <header className="header">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <h1>✏️ Edit Media</h1>
-            <p>Update: {formData.title}</p>
+      <div className="edit-page-header">
+        <button onClick={() => navigate('/')} className="back-button-top">
+          ← Back to Catalog
+        </button>
+        <h1>✏️ Edit Media Item</h1>
+        <p>Update your entertainment details</p>
+      </div>
+
+      <div className="edit-form-wrapper">
+        <div className="edit-preview-card">
+          {mediaItem.coverImageUrl && (
+            <div className="preview-image-container">
+              <img src={mediaItem.coverImageUrl} alt={mediaItem.title} className="preview-image" />
+            </div>
+          )}
+          <h2>{mediaItem.title || 'Untitled'}</h2>
+          <div className="preview-details">
+            <span className="preview-badge">{mediaItem.type}</span>
+            <span className="preview-badge status-badge">{mediaItem.status}</span>
+            {mediaItem.rating && (
+              <span className="preview-badge rating-badge">⭐ {mediaItem.rating}/10</span>
+            )}
           </div>
-          <button 
-            onClick={handleCancel}
-            style={{
-              padding: '10px 20px',
-              background: 'rgba(255, 255, 255, 0.2)',
-              color: 'white',
-              border: '1px solid rgba(255, 255, 255, 0.3)',
-              borderRadius: '5px',
-              cursor: 'pointer',
-              fontWeight: 'bold'
-            }}
-          >
-            ← Back
-          </button>
         </div>
-      </header>
 
-      <div className="form-container" style={{ maxWidth: '800px', margin: '20px auto' }}>
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>
-              <span className="label-icon">🎬</span>
-              Title *
-            </label>
-            <input
-              type="text"
-              name="title"
-              value={formData.title}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
+        <div className="edit-form-card">
+          <h2>📝 Edit Details</h2>
+          
+          <form onSubmit={handleSubmit}>
+            <div className="form-row">
+              <div className="form-group">
+                <label>
+                  <span className="label-icon">🎬</span>
+                  Title *
+                </label>
+                <input
+                  type="text"
+                  name="title"
+                  value={mediaItem.title}
+                  onChange={handleChange}
+                  placeholder="Enter title"
+                  required
+                />
+              </div>
+            </div>
 
-          <div className="form-group">
-            <label>
-              <span className="label-icon">📁</span>
-              Type *
-            </label>
-            <select name="type" value={formData.type} onChange={handleInputChange}>
-              <option value="Movie">🎬 Movie</option>
-              <option value="TV Show">📺 TV Show</option>
-              <option value="Book">📚 Book</option>
-              <option value="Music">🎵 Music</option>
-              <option value="Game">🎮 Game</option>
-            </select>
-          </div>
+            <div className="form-row two-columns">
+              <div className="form-group">
+                <label>
+                  <span className="label-icon">📁</span>
+                  Type *
+                </label>
+                <select name="type" value={mediaItem.type} onChange={handleChange}>
+                  <option value="Movie">🎬 Movie</option>
+                  <option value="TV Show">📺 TV Show</option>
+                  <option value="Book">📚 Book</option>
+                  <option value="Music">🎵 Music</option>
+                  <option value="Game">🎮 Game</option>
+                </select>
+              </div>
 
-          <div className="form-group">
-            <label>
-              <span className="label-icon">📊</span>
-              Status *
-            </label>
-            <select name="status" value={formData.status} onChange={handleInputChange}>
-              <option value="Wishlist">⭐ Wishlist</option>
-              <option value="In Progress">▶️ In Progress</option>
-              <option value="Completed">✅ Completed</option>
-            </select>
-          </div>
+              <div className="form-group">
+                <label>
+                  <span className="label-icon">📊</span>
+                  Status *
+                </label>
+                <select name="status" value={mediaItem.status} onChange={handleChange}>
+                  <option value="Wishlist">⭐ Wishlist</option>
+                  <option value="In Progress">▶️ In Progress</option>
+                  <option value="Completed">✅ Completed</option>
+                </select>
+              </div>
+            </div>
 
-          <div className="form-group">
-            <label>
-              <span className="label-icon">🎭</span>
-              Genre
-            </label>
-            <input
-              type="text"
-              name="genre"
-              value={formData.genre || ''}
-              onChange={handleInputChange}
-            />
-          </div>
+            <div className="form-row two-columns">
+              <div className="form-group">
+                <label>
+                  <span className="label-icon">🎭</span>
+                  Genre
+                </label>
+                <input
+                  type="text"
+                  name="genre"
+                  value={mediaItem.genre || ''}
+                  onChange={handleChange}
+                  placeholder="e.g., Action, Drama"
+                />
+              </div>
 
-          <div className="form-group">
-            <label>
-              <span className="label-icon">📅</span>
-              Release Year
-            </label>
-            <input
-              type="text"
-              name="releaseYear"
-              value={formData.releaseYear || ''}
-              onChange={handleInputChange}
-            />
-          </div>
+              <div className="form-group">
+                <label>
+                  <span className="label-icon">📅</span>
+                  Release Year
+                </label>
+                {/* ✅ FIX: Added maxLength and pattern for year validation */}
+                <input
+                  type="text"
+                  name="releaseYear"
+                  value={mediaItem.releaseYear || ''}
+                  onChange={handleChange}
+                  placeholder="e.g., 2024"
+                  maxLength="4"
+                  pattern="\d{4}"
+                  style={{ borderColor: validationErrors.releaseYear ? 'red' : '' }}
+                />
+                {/* ✅ FIX: Added error message display */}
+                {validationErrors.releaseYear && (
+                  <span style={{ color: 'red', fontSize: '12px' }}>
+                    {validationErrors.releaseYear}
+                  </span>
+                )}
+              </div>
+            </div>
 
-          <div className="form-group">
-            <label>
-              <span className="label-icon">⭐</span>
-              Rating (0-10)
-            </label>
-            <input
-              type="number"
-              name="rating"
-              min="0"
-              max="10"
-              step="0.1"
-              value={formData.rating || ''}
-              onChange={handleInputChange}
-            />
-          </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>
+                  <span className="label-icon">⭐</span>
+                  Rating (0-10)
+                </label>
+                <div className="rating-input-container">
+                  <input
+                    type="number"
+                    name="rating"
+                    min="0"
+                    max="10"
+                    step="0.1"
+                    value={mediaItem.rating || ''}
+                    onChange={handleChange}
+                    placeholder="Rate from 0 to 10"
+                    style={{ borderColor: validationErrors.rating ? 'red' : '' }}
+                  />
+                  <span className="rating-display">{mediaItem.rating ? `${mediaItem.rating}/10` : 'Not rated'}</span>
+                </div>
+                {/* ✅ FIX: Added error message display */}
+                {validationErrors.rating && (
+                  <span style={{ color: 'red', fontSize: '12px', display: 'block' }}>
+                    {validationErrors.rating}
+                  </span>
+                )}
+              </div>
+            </div>
 
-          <div className="form-group">
-            <label>
-              <span className="label-icon">🖼️</span>
-              Cover Image URL
-            </label>
-            <input
-              type="text"
-              name="coverImageUrl"
-              value={formData.coverImageUrl || ''}
-              onChange={handleInputChange}
-            />
-          </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>
+                  <span className="label-icon">🖼️</span>
+                  Cover Image URL
+                </label>
+                {/* ✅ FIX: Changed type to url for validation */}
+                <input
+                  type="url"
+                  name="coverImageUrl"
+                  value={mediaItem.coverImageUrl || ''}
+                  onChange={handleChange}
+                  placeholder="https://example.com/image.jpg"
+                  style={{ borderColor: validationErrors.coverImageUrl ? 'red' : '' }}
+                />
+                {/* ✅ FIX: Added error message display */}
+                {validationErrors.coverImageUrl && (
+                  <span style={{ color: 'red', fontSize: '12px' }}>
+                    {validationErrors.coverImageUrl}
+                  </span>
+                )}
+              </div>
+            </div>
 
-          <div className="form-group">
-            <label>
-              <span className="label-icon">📝</span>
-              Notes
-            </label>
-            <textarea
-              name="notes"
-              value={formData.notes || ''}
-              onChange={handleInputChange}
-              rows="4"
-            />
-          </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>
+                  <span className="label-icon">📝</span>
+                  Notes
+                </label>
+                <textarea
+                  name="notes"
+                  value={mediaItem.notes || ''}
+                  onChange={handleChange}
+                  placeholder="Add your thoughts, reviews, or reminders..."
+                  rows="5"
+                />
+              </div>
+            </div>
 
-          <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-            <button type="submit" className="submit-button" style={{ flex: 1 }}>
-              💾 Save Changes
-            </button>
-            <button 
-              type="button" 
-              onClick={handleCancel} 
-              style={{
-                flex: 1,
-                padding: '12px',
-                background: '#6c757d',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '16px',
-                fontWeight: 'bold',
-                cursor: 'pointer'
-              }}
-            >
-              ❌ Cancel
-            </button>
-          </div>
-        </form>
+            <div className="form-actions">
+              <button type="button" onClick={() => navigate('/')} className="cancel-button">
+                ✖ Cancel
+              </button>
+              <button type="submit" className="save-button">
+                💾 Save Changes
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
-}
+};
 
 export default EditMedia;
