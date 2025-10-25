@@ -6,6 +6,8 @@ import Login from './components/Login';
 import Register from './components/Register';
 import ProtectedRoute from './components/ProtectedRoute';
 
+// API URL for backend - ONLY ADDITION NEEDED
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 function MainApp() {
   const [mediaItems, setMediaItems] = useState([]);
@@ -22,7 +24,6 @@ function MainApp() {
     notes: ''
   });
 
-
   useEffect(() => {
     // Get user info
     const userStr = localStorage.getItem('user');
@@ -36,11 +37,11 @@ function MainApp() {
     fetchMediaItems();
   }, []);
 
-
-    const fetchMediaItems = async () => {
+  // FIXED: Use API_URL and proper headers
+  const fetchMediaItems = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/media', {
+      const response = await fetch(`${API_URL}/api/media`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -59,19 +60,22 @@ function MainApp() {
     }
   };
 
-
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-
-    const handleSubmit = async (e) => {
+  // FIXED: Use API_URL and proper headers with token
+  const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/media', {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/api/media`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(formData)
       });
       if (response.ok) {
@@ -93,13 +97,12 @@ function MainApp() {
     }
   };
 
-
-
-    const handleDelete = async (id) => {
+  // FIXED: Use API_URL
+  const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this item?')) {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`/api/media/${id}`, {
+        const response = await fetch(`${API_URL}/api/media/${id}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`
@@ -119,20 +122,16 @@ function MainApp() {
     }
   };
 
-
-
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     window.location.href = '/login';
   };
 
-
   const totalItems = mediaItems.length;
   const completedItems = mediaItems.filter(item => item.status === 'Completed').length;
   const inProgressItems = mediaItems.filter(item => item.status === 'In Progress').length;
   const wishlistItems = mediaItems.filter(item => item.status === 'Wishlist').length;
-
 
   return (
     <div className="App">
@@ -163,7 +162,6 @@ function MainApp() {
         </div>
       </header>
 
-
       <div className="stats-container">
         <div className="stat-card">
           <div className="stat-label">Total Items</div>
@@ -183,7 +181,6 @@ function MainApp() {
         </div>
       </div>
 
-
       <div className="filter-section">
         <label>Status:</label>
         <select className="filter-select">
@@ -196,7 +193,6 @@ function MainApp() {
           {showForm ? 'Close Form' : '+ Add New Media Item'}
         </button>
       </div>
-
 
       {showForm && (
         <div className="form-container">
@@ -217,7 +213,6 @@ function MainApp() {
               />
             </div>
 
-
             <div className="form-group">
               <label>
                 <span className="label-icon">📁</span>
@@ -232,7 +227,6 @@ function MainApp() {
               </select>
             </div>
 
-
             <div className="form-group">
               <label>
                 <span className="label-icon">📊</span>
@@ -244,7 +238,6 @@ function MainApp() {
                 <option value="Completed">✅ Completed</option>
               </select>
             </div>
-
 
             <div className="form-group">
               <label>
@@ -260,7 +253,6 @@ function MainApp() {
               />
             </div>
 
-
             <div className="form-group">
               <label>
                 <span className="label-icon">📅</span>
@@ -274,7 +266,6 @@ function MainApp() {
                 placeholder="e.g., 2024"
               />
             </div>
-
 
             <div className="form-group">
               <label>
@@ -293,7 +284,6 @@ function MainApp() {
               />
             </div>
 
-
             <div className="form-group">
               <label>
                 <span className="label-icon">🖼️</span>
@@ -307,7 +297,6 @@ function MainApp() {
                 placeholder="https://example.com/image.jpg"
               />
             </div>
-
 
             <div className="form-group">
               <label>
@@ -323,12 +312,10 @@ function MainApp() {
               />
             </div>
 
-
             <button type="submit" className="submit-button">Add Media</button>
           </form>
         </div>
       )}
-
 
       <div className="media-grid">
         {mediaItems.length === 0 ? (
@@ -368,14 +355,12 @@ function MainApp() {
         )}
       </div>
 
-
       <footer className="footer">
         <p>Made with ❤️ in VS Code</p>
       </footer>
     </div>
   );
 }
-
 
 // ✅ NEW WRAPPER - ADDS AUTHENTICATION
 function App() {
