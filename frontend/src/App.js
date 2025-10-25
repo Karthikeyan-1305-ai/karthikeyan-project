@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
 import EditMedia from './EditMedia';
+import Login from './components/Login';
+import Register from './components/Register';
+import ProtectedRoute from './components/ProtectedRoute';
+
 
 function MainApp() {
   const [mediaItems, setMediaItems] = useState([]);
   const [showForm, setShowForm] = useState(false);
+  const [user, setUser] = useState(null);
   const [formData, setFormData] = useState({
     title: '',
     type: 'Movie',
@@ -17,76 +22,176 @@ function MainApp() {
     notes: ''
   });
 
+
   useEffect(() => {
+    // Get user info
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      try {
+        setUser(JSON.parse(userStr));
+      } catch (e) {
+        console.error('Error parsing user:', e);
+      }
+    }
     fetchMediaItems();
   }, []);
 
-  const fetchMediaItems = async () => {
+
+    const fetchMediaItems = async () => {
     try {
-      const response = await fetch('/api/media');
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/media', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       const data = await response.json();
-      setMediaItems(data);
+      
+      // Ensure data is always an array
+      if (Array.isArray(data)) {
+        setMediaItems(data);
+      } else {
+        setMediaItems([]);
+      }
     } catch (error) {
       console.error('Error fetching media:', error);
+      setMediaItems([]);
     }
   };
+
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await fetch('/api/media', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+
+    const handleSubmit = async (e) => {
+  e.preventDefault();
+  
+  console.log('🔵 Form submitted!');
+  console.log('🔵 Form data:', formData);
+  
+  try {
+    const token = localStorage.getItem('token');
+    console.log('🔵 Token exists:', !!token);
+    
+    if (!token) {
+      alert('❌ You must be logged in to add media');
+      return;
+    }
+
+    console.log('🔵 Sending POST request to: http://localhost:5000/api/media');
+    
+    const response = await fetch('http://localhost:5000/api/media', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(formData)
+    });
+
+    console.log('🔵 Response status:', response.status);
+    console.log('🔵 Response ok:', response.ok);
+
+    const responseData = await response.json();
+    console.log('🔵 Response data:', responseData);
+
+    if (response.ok) {
+      alert('✅ Media added successfully!');
+      await fetchMediaItems(); // Refresh the list
+      setShowForm(false);
+      setFormData({
+        title: '',
+        type: 'Movie',
+        status: 'Wishlist',
+        genre: '',
+        releaseYear: '',
+        rating: '',
+        coverImageUrl: '',
+        notes: ''
       });
-      if (response.ok) {
-        fetchMediaItems();
-        setShowForm(false);
-        setFormData({
-          title: '',
-          type: 'Movie',
-          status: 'Wishlist',
-          genre: '',
-          releaseYear: '',
-          rating: '',
-          coverImageUrl: '',
-          notes: ''
+    } else {
+      alert('❌ Error: ' + (responseData.message || 'Failed to add media'));
+    }
+  } catch (error) {
+    console.error('🔴 Error adding media:', error);
+    alert('❌ Error adding media: ' + error.message);
+  }
+};
+
+
+
+
+    const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this item?')) {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/media/${id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
         });
+
+        if (response.ok) {
+          alert('Media deleted successfully! ✅');
+          fetchMediaItems();
+        } else {
+          alert('Error deleting media');
+        }
+      } catch (error) {
+        console.error('Error deleting media:', error);
+        alert('Error: ' + error.message);
       }
-    } catch (error) {
-      console.error('Error adding media:', error);
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this item?')) {
-      try {
-        await fetch(`/api/media/${id}`, {
-          method: 'DELETE'
-        });
-        fetchMediaItems();
-      } catch (error) {
-        console.error('Error deleting media:', error);
-      }
-    }
+
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = '/login';
   };
+
 
   const totalItems = mediaItems.length;
   const completedItems = mediaItems.filter(item => item.status === 'Completed').length;
   const inProgressItems = mediaItems.filter(item => item.status === 'In Progress').length;
   const wishlistItems = mediaItems.filter(item => item.status === 'Wishlist').length;
 
+
   return (
     <div className="App">
       <header className="header">
-        <h1>Media Catalog</h1>
-        <p>Track all your entertainment in one place</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h1>Media Catalog</h1>
+            <p>Track all your entertainment in one place</p>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            {user && <p style={{ margin: '0', color: '#fff' }}>Welcome, <strong>{user.fullName}</strong>!</p>}
+            <button 
+              onClick={handleLogout}
+              style={{
+                marginTop: '10px',
+                padding: '10px 20px',
+                background: '#e74c3c',
+                color: 'white',
+                border: 'none',
+                borderRadius: '5px',
+                cursor: 'pointer',
+                fontWeight: 'bold'
+              }}
+            >
+              Logout
+            </button>
+          </div>
+        </div>
       </header>
+
 
       <div className="stats-container">
         <div className="stat-card">
@@ -107,6 +212,7 @@ function MainApp() {
         </div>
       </div>
 
+
       <div className="filter-section">
         <label>Status:</label>
         <select className="filter-select">
@@ -119,6 +225,7 @@ function MainApp() {
           {showForm ? 'Close Form' : '+ Add New Media Item'}
         </button>
       </div>
+
 
       {showForm && (
         <div className="form-container">
@@ -139,6 +246,7 @@ function MainApp() {
               />
             </div>
 
+
             <div className="form-group">
               <label>
                 <span className="label-icon">📁</span>
@@ -153,6 +261,7 @@ function MainApp() {
               </select>
             </div>
 
+
             <div className="form-group">
               <label>
                 <span className="label-icon">📊</span>
@@ -164,6 +273,7 @@ function MainApp() {
                 <option value="Completed">✅ Completed</option>
               </select>
             </div>
+
 
             <div className="form-group">
               <label>
@@ -179,6 +289,7 @@ function MainApp() {
               />
             </div>
 
+
             <div className="form-group">
               <label>
                 <span className="label-icon">📅</span>
@@ -192,6 +303,7 @@ function MainApp() {
                 placeholder="e.g., 2024"
               />
             </div>
+
 
             <div className="form-group">
               <label>
@@ -210,6 +322,7 @@ function MainApp() {
               />
             </div>
 
+
             <div className="form-group">
               <label>
                 <span className="label-icon">🖼️</span>
@@ -223,6 +336,7 @@ function MainApp() {
                 placeholder="https://example.com/image.jpg"
               />
             </div>
+
 
             <div className="form-group">
               <label>
@@ -238,10 +352,12 @@ function MainApp() {
               />
             </div>
 
+
             <button type="submit" className="submit-button">Add Media</button>
           </form>
         </div>
       )}
+
 
       <div className="media-grid">
         {mediaItems.length === 0 ? (
@@ -281,19 +397,46 @@ function MainApp() {
         )}
       </div>
 
+
       <footer className="footer">
-        <p>Made in VS Code</p>
+        <p>Made with ❤️ in VS Code</p>
       </footer>
     </div>
   );
 }
 
+
+// ✅ NEW WRAPPER - ADDS AUTHENTICATION
 function App() {
+  const token = localStorage.getItem('token');
+
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<MainApp />} />
-        <Route path="/edit-media/:id" element={<EditMedia />} />
+        {/* Public Routes */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+
+        {/* Protected Routes - Your existing media catalog with authentication */}
+        <Route 
+          path="/" 
+          element={
+            <ProtectedRoute>
+              <MainApp />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/edit-media/:id" 
+          element={
+            <ProtectedRoute>
+              <EditMedia />
+            </ProtectedRoute>
+          } 
+        />
+
+        {/* Default - Redirect based on login status */}
+        <Route path="*" element={<Navigate to={token ? "/" : "/login"} replace />} />
       </Routes>
     </Router>
   );

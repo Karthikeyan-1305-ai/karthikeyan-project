@@ -18,36 +18,117 @@ const EditMedia = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [validationErrors, setValidationErrors] = useState({});
 
   useEffect(() => {
     const fetchMediaItem = async () => {
       try {
-        const response = await axios.get(`/api/media/${id}`);
+        const token = localStorage.getItem('token');
+        if (!token) {
+          navigate('/login');
+          return;
+        }
+
+        // ✅ FIX: Added full URL and Authorization header
+        const response = await axios.get(`http://localhost:5000/api/media/${id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         setMediaItem(response.data);
         setLoading(false);
       } catch (err) {
         console.error('Error fetching media item:', err);
-        setError('Failed to load media item');
+        if (err.response?.status === 401) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          navigate('/login');
+        } else {
+          setError('Failed to load media item');
+        }
         setLoading(false);
       }
     };
     
     fetchMediaItem();
-  }, [id]);
+  }, [id, navigate]);
+
+  // ✅ FIX: Added validation function
+  const validateForm = () => {
+    const errors = {};
+
+    // Year validation - must be 4 digits
+    if (mediaItem.releaseYear && !/^\d{4}$/.test(mediaItem.releaseYear)) {
+      errors.releaseYear = 'Year must be 4 digits (e.g., 2024)';
+    }
+
+    // Rating validation
+    if (mediaItem.rating) {
+      const rating = parseFloat(mediaItem.rating);
+      if (isNaN(rating) || rating < 0 || rating > 10) {
+        errors.rating = 'Rating must be between 0 and 10';
+      }
+    }
+
+    // URL validation
+    if (mediaItem.coverImageUrl && mediaItem.coverImageUrl.trim() !== '') {
+      try {
+        const url = new URL(mediaItem.coverImageUrl);
+        if (!['http:', 'https:'].includes(url.protocol)) {
+          errors.coverImageUrl = 'URL must start with http:// or https://';
+        }
+      } catch {
+        errors.coverImageUrl = 'Please enter a valid URL';
+      }
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleChange = (e) => {
-    setMediaItem({ ...mediaItem, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setMediaItem({ ...mediaItem, [name]: value });
+    
+    // Clear validation error for this field
+    if (validationErrors[name]) {
+      setValidationErrors({ ...validationErrors, [name]: '' });
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // ✅ FIX: Added validation check
+    if (!validateForm()) {
+      alert('❌ Please fix the validation errors');
+      return;
+    }
+    
     try {
-      await axios.put(`/api/media/${id}`, mediaItem);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        navigate('/login');
+        return;
+      }
+
+      // ✅ FIX: Added full URL and Authorization header
+      await axios.put(`http://localhost:5000/api/media/${id}`, mediaItem, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       alert('✅ Media item updated successfully!');
       navigate('/');
     } catch (err) {
       console.error('Error updating media:', err);
-      alert('❌ Error updating media item');
+      if (err.response?.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        navigate('/login');
+      } else {
+        alert('❌ Error updating media item');
+      }
     }
   };
 
@@ -171,13 +252,23 @@ const EditMedia = () => {
                   <span className="label-icon">📅</span>
                   Release Year
                 </label>
+                {/* ✅ FIX: Added maxLength and pattern for year validation */}
                 <input
                   type="text"
                   name="releaseYear"
                   value={mediaItem.releaseYear || ''}
                   onChange={handleChange}
                   placeholder="e.g., 2024"
+                  maxLength="4"
+                  pattern="\d{4}"
+                  style={{ borderColor: validationErrors.releaseYear ? 'red' : '' }}
                 />
+                {/* ✅ FIX: Added error message display */}
+                {validationErrors.releaseYear && (
+                  <span style={{ color: 'red', fontSize: '12px' }}>
+                    {validationErrors.releaseYear}
+                  </span>
+                )}
               </div>
             </div>
 
@@ -197,9 +288,16 @@ const EditMedia = () => {
                     value={mediaItem.rating || ''}
                     onChange={handleChange}
                     placeholder="Rate from 0 to 10"
+                    style={{ borderColor: validationErrors.rating ? 'red' : '' }}
                   />
                   <span className="rating-display">{mediaItem.rating ? `${mediaItem.rating}/10` : 'Not rated'}</span>
                 </div>
+                {/* ✅ FIX: Added error message display */}
+                {validationErrors.rating && (
+                  <span style={{ color: 'red', fontSize: '12px', display: 'block' }}>
+                    {validationErrors.rating}
+                  </span>
+                )}
               </div>
             </div>
 
@@ -209,13 +307,21 @@ const EditMedia = () => {
                   <span className="label-icon">🖼️</span>
                   Cover Image URL
                 </label>
+                {/* ✅ FIX: Changed type to url for validation */}
                 <input
-                  type="text"
+                  type="url"
                   name="coverImageUrl"
                   value={mediaItem.coverImageUrl || ''}
                   onChange={handleChange}
                   placeholder="https://example.com/image.jpg"
+                  style={{ borderColor: validationErrors.coverImageUrl ? 'red' : '' }}
                 />
+                {/* ✅ FIX: Added error message display */}
+                {validationErrors.coverImageUrl && (
+                  <span style={{ color: 'red', fontSize: '12px' }}>
+                    {validationErrors.coverImageUrl}
+                  </span>
+                )}
               </div>
             </div>
 
