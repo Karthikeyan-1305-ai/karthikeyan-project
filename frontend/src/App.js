@@ -6,7 +6,7 @@ import Login from './components/Login';
 import Register from './components/Register';
 import ProtectedRoute from './components/ProtectedRoute';
 
-// API URL for backend - ONLY ADDITION NEEDED
+
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 function MainApp() {
@@ -25,7 +25,6 @@ function MainApp() {
   });
 
   useEffect(() => {
-    // Get user info
     const userStr = localStorage.getItem('user');
     if (userStr) {
       try {
@@ -37,23 +36,14 @@ function MainApp() {
     fetchMediaItems();
   }, []);
 
-  // FIXED: Use API_URL and proper headers
   const fetchMediaItems = async () => {
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(`${API_URL}/api/media`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
-      
-      // Ensure data is always an array
-      if (Array.isArray(data)) {
-        setMediaItems(data);
-      } else {
-        setMediaItems([]);
-      }
+      setMediaItems(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching media:', error);
       setMediaItems([]);
@@ -65,14 +55,35 @@ function MainApp() {
     setFormData({ ...formData, [name]: value });
   };
 
-  // FIXED: Use API_URL and proper headers with token
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validation
+    if (formData.releaseYear) {
+      const year = parseInt(formData.releaseYear, 10);
+      if (isNaN(year) || formData.releaseYear.length !== 4 || year < 1900 || year > 2099) {
+        alert('Please enter a valid year (1900–2099).');
+        return;
+      }
+    }
+    if (formData.rating !== '' && (Number(formData.rating) < 0 || Number(formData.rating) > 10)) {
+      alert('Rating must be between 0 and 10.');
+      return;
+    }
+    if (formData.coverImageUrl) {
+      try {
+        new URL(formData.coverImageUrl);
+      } catch {
+        alert('Please enter a valid URL.');
+        return;
+      }
+    }
+
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(`${API_URL}/api/media`, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
@@ -97,18 +108,14 @@ function MainApp() {
     }
   };
 
-  // FIXED: Use API_URL
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this item?')) {
       try {
         const token = localStorage.getItem('token');
         const response = await fetch(`${API_URL}/api/media/${id}`, {
           method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+          headers: { 'Authorization': `Bearer ${token}` }
         });
-
         if (response.ok) {
           alert('Media deleted successfully! ✅');
           fetchMediaItems();
@@ -143,7 +150,7 @@ function MainApp() {
           </div>
           <div style={{ textAlign: 'right' }}>
             {user && <p style={{ margin: '0', color: '#fff' }}>Welcome, <strong>{user.fullName}</strong>!</p>}
-            <button 
+            <button
               onClick={handleLogout}
               style={{
                 marginTop: '10px',
@@ -337,13 +344,13 @@ function MainApp() {
                 {item.releaseYear && <p><strong>Year:</strong> {item.releaseYear}</p>}
                 {item.rating && <p><strong>Rating:</strong> {item.rating}/10</p>}
                 {item.notes && <p><strong>Notes:</strong> {item.notes}</p>}
-                
+
                 <div className="button-container">
                   <Link to={`/edit-media/${item.id}`}>
                     <button className="edit-button">Edit</button>
                   </Link>
-                  <button 
-                    onClick={() => handleDelete(item.id)} 
+                  <button
+                    onClick={() => handleDelete(item.id)}
                     className="delete-button"
                   >
                     Delete
@@ -362,36 +369,15 @@ function MainApp() {
   );
 }
 
-// ✅ NEW WRAPPER - ADDS AUTHENTICATION
 function App() {
   const token = localStorage.getItem('token');
-
   return (
     <Router>
       <Routes>
-        {/* Public Routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-
-        {/* Protected Routes - Your existing media catalog with authentication */}
-        <Route 
-          path="/" 
-          element={
-            <ProtectedRoute>
-              <MainApp />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/edit-media/:id" 
-          element={
-            <ProtectedRoute>
-              <EditMedia />
-            </ProtectedRoute>
-          } 
-        />
-
-        {/* Default - Redirect based on login status */}
+        <Route path="/" element={<ProtectedRoute><MainApp /></ProtectedRoute>} />
+        <Route path="/edit-media/:id" element={<ProtectedRoute><EditMedia /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to={token ? "/" : "/login"} replace />} />
       </Routes>
     </Router>
