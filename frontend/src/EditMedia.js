@@ -30,7 +30,8 @@ const EditMedia = () => {
         }
 
         // ✅ FIX: Added full URL and Authorization header
-        const response = await axios.get(`http://localhost:5000/api/media/${id}`, {
+        const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+        const response = await axios.get(`${API_URL}/api/media/${id}`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
