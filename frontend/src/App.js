@@ -67,60 +67,31 @@ function MainApp() {
 
 
     const handleSubmit = async (e) => {
-  e.preventDefault();
-  
-  console.log('🔵 Form submitted!');
-  console.log('🔵 Form data:', formData);
-  
-  try {
-    const token = localStorage.getItem('token');
-    console.log('🔵 Token exists:', !!token);
-    
-    if (!token) {
-      alert('❌ You must be logged in to add media');
-      return;
-    }
-
-    console.log('🔵 Sending POST request to: http://localhost:5000/api/media');
-    
-    const response = await fetch('http://localhost:5000/api/media', {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(formData)
-    });
-
-    console.log('🔵 Response status:', response.status);
-    console.log('🔵 Response ok:', response.ok);
-
-    const responseData = await response.json();
-    console.log('🔵 Response data:', responseData);
-
-    if (response.ok) {
-      alert('✅ Media added successfully!');
-      await fetchMediaItems(); // Refresh the list
-      setShowForm(false);
-      setFormData({
-        title: '',
-        type: 'Movie',
-        status: 'Wishlist',
-        genre: '',
-        releaseYear: '',
-        rating: '',
-        coverImageUrl: '',
-        notes: ''
+    e.preventDefault();
+    try {
+      const response = await fetch('/api/media', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
       });
-    } else {
-      alert('❌ Error: ' + (responseData.message || 'Failed to add media'));
+      if (response.ok) {
+        fetchMediaItems();
+        setShowForm(false);
+        setFormData({
+          title: '',
+          type: 'Movie',
+          status: 'Wishlist',
+          genre: '',
+          releaseYear: '',
+          rating: '',
+          coverImageUrl: '',
+          notes: ''
+        });
+      }
+    } catch (error) {
+      console.error('Error adding media:', error);
     }
-  } catch (error) {
-    console.error('🔴 Error adding media:', error);
-    alert('❌ Error adding media: ' + error.message);
-  }
-};
-
+  };
 
 
 
